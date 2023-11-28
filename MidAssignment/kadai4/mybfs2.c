@@ -27,7 +27,7 @@ int depth_increase = 30;
 
 int check(BOARD*);
 int equal(BOARD*, BOARD*);
-void exchange(BOARD*, int, int);
+void exchange(BOARD*, int, int, int);
 void expand(BOARD*);
 void putq(BOARD*);
 void init();
@@ -46,7 +46,7 @@ int main(){
 void init(){
     for (int i = 0; i < NUM_PEOPLE; i++){
         B0.cell[i] = 0;
-        BG.cell[i] = 1;
+        BG.cell[i] = 2;
     }
     B0.next = NULL;
     BG.next = NULL;
@@ -106,25 +106,39 @@ void expand(BOARD *b){
     for (int i = 0; i < NUM_PEOPLE; i++){
         for (int j = i; j < NUM_PEOPLE; j++){
             if (i == j) {
-                if (b->depth % 2 == 0 && b->cell[i] == 0){
-                    exchange(b, i, -1);
-                } else if (b->depth % 2 == 1 && b->cell[i] == 1){
-                    exchange(b, i, -1);
+                if (b->depth % 2 == 0){
+                    if (b->cell[i] == 0 && b->now == 0) {
+                        exchange(b, i, -1, 0);
+                    }
+                    else if (b->cell[i] == 2 && b->now == 2) {
+                        exchange(b, i, -1, 1);
+                    }
+                } else if (b->depth % 2 == 1){
+                    if (b->cell[i] == 1) {
+                        exchange(b, i, -1, 0);
+                        exchange(b, i, -1, 1);
+                    }
                 }
+               
             } else if (b->depth % 2 == 0){
-                if (b->cell[i] == 0 && b->cell[j] == 0){
-                    exchange(b, i, j);
+                if (b->cell[i] == 0 && b->cell[j] == 0 && b->now == 0){
+                    exchange(b, i, j, 0);
+                } else if (b->cell[i] == 2 && b->cell[j] == 2 && b->now == 2){
+                    exchange(b, i, j, 1);
                 }
+                
             } else if (b->depth % 2 == 1){
                 if (b->cell[i] == 1 && b->cell[j] == 1){
-                    exchange(b, i, j);
+                    exchange(b, i, j, 0);
+                    exchange(b, i, j, 1);
                 }
             }
         }
     }
+    
 }
 
-void exchange(BOARD *b, int s, int t){
+void exchange(BOARD *b, int s, int t, int flag){
     BOARD *m = (BOARD*) malloc (sizeof(BOARD));
     if (m == NULL){
         printf("memory overflow\n");
@@ -135,8 +149,8 @@ void exchange(BOARD *b, int s, int t){
         m->cell[i] = b->cell[i];
     }
 
-    if (s >= 0) m->cell[s] = 1 - (m->cell[s]);
-    if (t >= 0) m->cell[t] = 1 - (m->cell[t]);
+    if (s >= 0) m->cell[s] = (2 * flag + 1) - (m->cell[s]);
+    if (t >= 0) m->cell[t] = (2 * flag + 1) - (m->cell[t]);
     
     m->back = b;
     m->next = NULL;

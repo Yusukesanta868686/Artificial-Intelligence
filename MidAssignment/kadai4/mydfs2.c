@@ -51,7 +51,7 @@ struct BOARD *getq() {
 
 int check(BOARD*);
 int equal(BOARD*, BOARD*);
-BOARD *exchange(BOARD*, int, int);
+BOARD *exchange(BOARD*, int, int, int);
 void expand(BOARD*);
 int putq(BOARD*);
 void init();
@@ -62,6 +62,7 @@ int main(){
     init();
     
     while ((q1 = getq()) != NULL){
+        //printf("---------------------------\n");
         expand(q1);
         if (q0 == NULL) q0 = q1;
         else {
@@ -73,7 +74,7 @@ int main(){
 void init(){
     for (int i = 0; i < NUM_PEOPLE; i++){
         B0.cell[i] = 0;
-        BG.cell[i] = 1;
+        BG.cell[i] = 2;
     }
     B0.next = NULL;
     BG.next = NULL;
@@ -129,7 +130,7 @@ int equal (BOARD *b1, BOARD *b2){
     return 1;
 }
 
-BOARD *exchange(BOARD *b, int s, int t){
+BOARD *exchange(BOARD *b, int s, int t, int flag){
     BOARD *m = (BOARD*) malloc (sizeof(BOARD));
     if (m == NULL){
         printf("memory overflow\n");
@@ -139,9 +140,9 @@ BOARD *exchange(BOARD *b, int s, int t){
     for (int i = 0; i < NUM_PEOPLE; i++){
         m->cell[i] = b->cell[i];
     }
-
-    if (s >= 0) m->cell[s] = 1 - (m->cell[s]);
-    if (t >= 0) m->cell[t] = 1 - (m->cell[t]);
+    
+    if (s >= 0) m->cell[s] = (2 * flag + 1) - (m->cell[s]);
+    if (t >= 0) m->cell[t] = (2 * flag + 1) - (m->cell[t]);
     
     m->back = b;
     m->next = NULL;
@@ -161,49 +162,77 @@ BOARD *exchange(BOARD *b, int s, int t){
 }
 
 void expand(BOARD *b){
-    struct BOARD **m = (BOARD**)malloc(sizeof(BOARD) * NUM_TRANSITION);
+    struct BOARD **m = (BOARD**)malloc(sizeof(BOARD) * (NUM_TRANSITION * 2));
     
-    int k[NUM_TRANSITION];
+    int k[2 * NUM_TRANSITION];
     int count = 0;
 
-    for (int i = 0; i < NUM_TRANSITION; i++){
+    for (int i = 0; i < 2 * NUM_TRANSITION; i++){
         k[i] = 0;
     }
     
-    
+    //printf("now: %d\n", b->now);
+    //printf("depth: %d\n", b->depth);
     for (int i = 0; i < NUM_PEOPLE; i++){
         for (int j = i; j < NUM_PEOPLE; j++){
             if (i == j) {
-                if (b->depth % 2 == 0 && b->cell[i] == 0){
-                    m[count] = exchange(b, i, -1);
-                } else if (b->depth % 2 == 1 && b->cell[i] == 1){
-                    m[count] = exchange(b, i, -1);
+                if (b->depth % 2 == 0){
+                    if (b->cell[i] == 0 && b->now == 0) {
+                        m[count] = exchange(b, i, -1, 0);
+                        count++;
+                    }
+                    else if (b->cell[i] == 2 && b->now == 2) {
+                        m[count] = exchange(b, i, -1, 1);
+                        count++;
+                    }
+                } else if (b->depth % 2 == 1){
+                    if (b->cell[i] == 1) {
+                        m[count] = exchange(b, i, -1, 0);
+                        count++;
+                        m[count] = exchange(b, i, -1, 1);
+                        count++;
+                    }
                 }
-                count++;
+               
             } else if (b->depth % 2 == 0){
-                if (b->cell[i] == 0 && b->cell[j] == 0){
-                    m[count] = exchange(b, i, j);
+                if (b->cell[i] == 0 && b->cell[j] == 0 && b->now == 0){
+                    m[count] = exchange(b, i, j, 0);
+                    count++;
+                } else if (b->cell[i] == 2 && b->cell[j] == 2 && b->now == 2){
+                    m[count] = exchange(b, i, j, 1);
+                    count++;
                 }
-                count++;
+                
             } else if (b->depth % 2 == 1){
                 if (b->cell[i] == 1 && b->cell[j] == 1){
-                    m[count] = exchange(b, i, j);
+                    m[count] = exchange(b, i, j, 0);
+                    count++;
+                    m[count] = exchange(b, i, j, 1);
+                    count++;
                 }
-                count++;
             }
         }
     }
     
-    for (int i = 0; i < NUM_TRANSITION; i++){
+    for (int i = 0; i < 2 * NUM_TRANSITION; i++){
+        /*
+        if (m[i] != NULL){
+            for (int j = 0; j < NUM_PEOPLE; j++){
+                printf("%d", m[i]->cell[j]);
+            }
+            printf("\n");
+        }*/
+    }
+    for (int i = 0; i < 2 * NUM_TRANSITION; i++){
         if (m[i] != NULL && check(m[i])) k[i] = putq(m[i]);
     }
-   
-    for (int i = 0; i < NUM_TRANSITION; i++){
-        
+    //printf("putq result: ");
+    for (int i = 0; i < 2 * NUM_TRANSITION; i++){
+        //printf("%d", k[i]);
         if ((m[i] != NULL) && (k[i])) nc++;
     }
-    
-    free(m);
+    //printf("\n");
+    //free(m);
 }
 
 int putq(BOARD *b){
@@ -229,7 +258,6 @@ int putq(BOARD *b){
         return 1;
     }
 }
-
 
 
 
