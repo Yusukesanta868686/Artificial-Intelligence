@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_COUPLES 3
+#define NUM_COUPLES 4
 #define NUM_PEOPLE (2 * NUM_COUPLES)
 #define NUM_TRANSITION (NUM_PEOPLE * (NUM_PEOPLE - 1) / 2 + NUM_PEOPLE)
 
@@ -24,8 +24,8 @@ BOARD *q2 = &B0;
 int nc = 0;
 int ns = 0;
 
-int depth_limit = 30;
-int depth_increase = 30;
+int depth_limit = 4;
+int depth_increase = 6;
 
 BOARD *getq() {
     BOARD *q; 
@@ -42,7 +42,6 @@ int equal(struct BOARD *b1, struct BOARD *b2);
 void init();
 int check(BOARD* b);
 void traceback(struct BOARD *b);
-void printQ(BOARD *b);
 void putq(struct BOARD *b);
 void f_value(BOARD *b);
 
@@ -187,26 +186,7 @@ void traceback(struct BOARD *b){
     }
 }
 
-void printboard(BOARD *b){
-    int i;
-    for (i=0;i<9;i++) {
-	    if (b->cell[i]==0) putchar('X');
-	    else printf("%1d",b->cell[i]);
-	    if (i%3==2) {
-	        putchar('\n');
-	        if (i!=8) {
-		    putchar('-');
-		    putchar('+');
-		    putchar('-');
-		    putchar('+');
-		    putchar('-');
-		    putchar('\n');
-	        }
-	    }
-	    else putchar('|');
-    }
-    putchar('\n');
-}
+
 
 void putq(BOARD *b){
     BOARD *n,*oldn=NULL; 

@@ -22,8 +22,8 @@ BOARD *q2 = &B0;
 int nc = 0;
 int ns = 0;
 
-int depth_limit = 300;
-int depth_increase = 30;
+int depth_limit = 4;
+int depth_increase = 6;
 
 int check(BOARD*);
 int equal(BOARD*, BOARD*);
