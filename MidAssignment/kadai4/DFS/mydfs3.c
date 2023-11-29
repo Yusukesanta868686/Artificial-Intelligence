@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_COUPLES 6
+#define NUM_COUPLES 4
 #define NUM_PEOPLE (2 * NUM_COUPLES)
 #define NUM_TRANSITION (NUM_PEOPLE * (NUM_PEOPLE - 1) / 2 + NUM_PEOPLE)
 
@@ -183,29 +183,25 @@ void expand(BOARD *b){
     for (int i = 0; i < NUM_PEOPLE; i++){
         for (int j = i; j < NUM_PEOPLE; j++){
             if (i == j) {
-                if (b->depth % 2 == 0){
-                    if (b->cell[i] == 0 && b->now == 0) {
-                        m[count] = exchange(b, i, -1, 0, 0);
-                        count++;
-                        m[count] = exchange(b, i, -j, 0, 1);
-                        count++;
-                    }
-                    else if (b->cell[i] == 2 && b->now == 2) {
-                        m[count] = exchange(b, i, -1, 1, 0);
-                        count++;
-                        m[count] = exchange(b, i, -1, 1, 1);
-                        count++;
-                    }
-                } else if (b->depth % 2 == 1){
-                    if (b->cell[i] == 1) {
-                        m[count] = exchange(b, i, -1, 0, 0);
-                        count++;
-                        m[count] = exchange(b, i, -1, 1, 0);
-                        count++;
-                    }
+                if (b->cell[i] == 0 && b->now == 0) {
+                    m[count] = exchange(b, i, -1, 0, 0);
+                    count++;
+                    m[count] = exchange(b, i, -j, 0, 1);
+                    count++;
                 }
-               
-            } else if (b->depth % 2 == 0){
+                else if (b->cell[i] == 2 && b->now == 2) {
+                    m[count] = exchange(b, i, -1, 1, 0);
+                    count++;
+                    m[count] = exchange(b, i, -1, 1, 1);
+                    count++;
+                }else if (b->cell[i] == 1 && b->now == 1) {
+                    m[count] = exchange(b, i, -1, 0, 0);
+                    count++;
+                    m[count] = exchange(b, i, -1, 1, 0);
+                    count++;
+                }
+                
+            } else{
                 if (b->cell[i] == 0 && b->cell[j] == 0 && b->now == 0){
                     m[count] = exchange(b, i, j, 0, 0);
                     count++;
@@ -216,10 +212,7 @@ void expand(BOARD *b){
                     count++;
                     m[count] = exchange(b, i, j, 1, 1);
                     count++;
-                }
-                
-            } else if (b->depth % 2 == 1){
-                if (b->cell[i] == 1 && b->cell[j] == 1){
+                }else if (b->cell[i] == 1 && b->cell[j] == 1 && b->now == 1){
                     m[count] = exchange(b, i, j, 0, 0);
                     count++;
                     m[count] = exchange(b, i, j, 1, 0);

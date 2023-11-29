@@ -130,33 +130,27 @@ void expand(BOARD *b){
     for (int i = 0; i < NUM_PEOPLE; i++){
         for (int j = i; j < NUM_PEOPLE; j++){
             if (i == j) {
-                if (b->depth % 2 == 0){
-                    if (b->cell[i] == 0 && b->now == 0) {
-                        exchange(b, i, -1, 0, 0);
-                        exchange(b, i, -1, 0, 1);
-                    }
-                    else if (b->cell[i] == 2 && b->now == 2) {
-                        exchange(b, i, -1, 1, 0);
-                        exchange(b, i, -1, 1, 1);
-                    }
-                } else if (b->depth % 2 == 1){
-                    if (b->cell[i] == 1) {
-                        exchange(b, i, -1, 0, 0);
-                        exchange(b, i, -1, 1, 0);
-                    }
+                if (b->cell[i] == 0 && b->now == 0) {
+                    exchange(b, i, -1, 0, 0);
+                    exchange(b, i, -1, 0, 1);
                 }
-               
-            } else if (b->depth % 2 == 0){
+                else if (b->cell[i] == 2 && b->now == 2) {
+                    exchange(b, i, -1, 1, 0);
+                    exchange(b, i, -1, 1, 1);
+                }
+                
+                if (b->cell[i] == 1 && b->now == 1) {
+                    exchange(b, i, -1, 0, 0);
+                    exchange(b, i, -1, 1, 0);
+                }
+            } else{
                 if (b->cell[i] == 0 && b->cell[j] == 0 && b->now == 0){
                     exchange(b, i, j, 0, 0);
                     exchange(b, i, j, 0, 1);
                 } else if (b->cell[i] == 2 && b->cell[j] == 2 && b->now == 2){
                     exchange(b, i, j, 1, 0);
                     exchange(b, i, j, 1, 1);
-                }
-                
-            } else if (b->depth % 2 == 1){
-                if (b->cell[i] == 1 && b->cell[j] == 1){
+                } else if (b->cell[i] == 1 && b->cell[j] == 1 && b->now == 1){
                     exchange(b, i, j, 0, 0);
                     exchange(b, i, j, 1, 0);
                 }
