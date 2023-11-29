@@ -1,14 +1,15 @@
 /* A star search */
 #include <stdio.h>
+#include <stdlib.h>
 
-struct BOARD {
+typedef struct BOARD {
     char cell[9];
     struct BOARD *next;
     struct BOARD *back;
     int depth,f;
-};
+} BOARD;
 
-struct BOARD B0 = {
+BOARD B0 = {
 /*    2,3,5,7,1,6,4,8,0,NULL,NULL,0,0  */
 /* problem 1 */
     1,5,2,4,0,3,7,8,6,NULL,NULL,0,0
@@ -16,14 +17,14 @@ struct BOARD B0 = {
 /*    1,2,0,4,5,3,7,8,6,NULL,NULL,0,0  */
 };
 
-struct BOARD BG = {
+BOARD BG = {
     1,2,3,4,5,6,7,8,0
 };
 
-struct BOARD *q0 = NULL, *q2 = &B0;
+BOARD *q0 = NULL, *q2 = &B0;
 
-struct BOARD *getq() {
-    struct BOARD *q; 
+BOARD *getq() {
+    BOARD *q; 
     if (q2==NULL) return NULL;
     q = q2;
     q2 = q2->next;
@@ -36,18 +37,29 @@ int ns = 0;
 #define FN1 "Init.dat"
 #define FN2 "Goal.dat"
 
-main(){
-    struct BOARD *b;
-    struct BOARD *q1;
+void readdata(struct BOARD *b, char *buf);
+void expand(struct BOARD *b);
+void exchange(struct BOARD *b,int i,int j);
+int equal(struct BOARD *b1, struct BOARD *b2);
+void traceback(struct BOARD *b);
+void printboard(struct BOARD *b);
+void bornprint(struct BOARD *b);
+void printQ(BOARD *b);
+void putq(struct BOARD *b);
+void f_value(BOARD *b);
+
+int main(){
+    BOARD *b;
+    BOARD *q1;
 
     readdata(&B0,FN1);
     readdata(&BG,FN2);
 
     B0.depth = 1;
 
-    printf("Initial state is \n",ns);
+    printf("Initial state is \n");
     printboard(&B0);
-    printf("Goal state is \n",ns);
+    printf("Goal state is \n");
     printboard(&BG);
     printf("Execution begins..\n");
 
@@ -66,14 +78,11 @@ main(){
 	    printf("Q2 is ...\n");
 	    printQ(q2);
     */
-    }
+        }
 }
 
 
-readdata(b,buf)
-struct BOARD *b;
-char *buf;
-{
+void readdata(BOARD *b, char *buf){
     FILE *fn;
     int num[9],k;
   
@@ -88,23 +97,20 @@ char *buf;
 }
 
 
-int diff(b1,b2)
-struct BOARD *b1,*b2; {
+int diff(BOARD* b1,BOARD* b2){
     int ans=0,k;
     for (k=0;k<9;k++) if(b1->cell[k] != b2->cell[k]) ans++;
     return(ans);
 }
 
 
-f_value(b)
-struct BOARD *b; {
+void f_value(BOARD *b){
     b->f = b->depth + diff(b,&BG);
 }
 
 
-exchange(b,i,j)
-struct BOARD *b; int i,j; {
-    struct BOARD *m;
+void exchange(BOARD *b, int i,int j){
+    BOARD *m;
     int k;
     m=(struct BOARD*)malloc (sizeof(struct BOARD));
     if (m==NULL) {
@@ -130,8 +136,7 @@ struct BOARD *b; int i,j; {
 }
 
 
-expand(b)
-struct BOARD *b; {
+void expand(BOARD *b){
     register int i;
     for (i=0; i<9; i++)
 	if (b->cell[i]==0) break;
@@ -142,47 +147,43 @@ struct BOARD *b; {
 }
 
 
-equal(b1,b2)
-struct BOARD *b1,*b2; {
+int equal(BOARD *b1,BOARD *b2){
     register int i;
     for (i=0; i<9; i++) 
 	if (b1->cell[i]!=b2->cell[i]) return 0;
     return 1;
 }
 
-traceback(b)
-struct BOARD *b; {
+void traceback(BOARD *b){
     for (; b!=NULL; b=b->back) {
 	ns++;
 	printboard(b);
     }
 }
 
-printboard(b)
-struct BOARD *b; {
+void printboard(BOARD *b){
     int i;
     for (i=0;i<9;i++) {
-	if (b->cell[i]==0) putchar('X');
-	else printf("%1d",b->cell[i]);
-	if (i%3==2) {
-	    putchar('\n');
-	    if (i!=8) {
-		putchar('-');
-		putchar('+');
-		putchar('-');
-		putchar('+');
-		putchar('-');
-		putchar('\n');
+	    if (b->cell[i]==0) putchar('X');
+	    else printf("%1d",b->cell[i]);
+	    if (i%3==2) {
+	        putchar('\n');
+	        if (i!=8) {
+		    putchar('-');
+		    putchar('+');
+		    putchar('-');
+		    putchar('+');
+		    putchar('-');
+		    putchar('\n');
+	        }
 	    }
-	}
-	else putchar('|');
+	    else putchar('|');
     }
     putchar('\n');
 }
 
 
-printQ(b)
-struct BOARD *b; {
+void printQ(BOARD *b){
     if (b==NULL) return;
     printboard(b);
     printf(" %d ==> \n",b->f);
@@ -190,8 +191,7 @@ struct BOARD *b; {
 }
 
 
-bornprint(b)
-struct BOARD *b; {
+void bornprint(BOARD *b){
     nc++;
     printboard(b->back);
     printf(" %d ----> %d \n",b->back->f,b->f);
@@ -199,26 +199,32 @@ struct BOARD *b; {
    printf("\n");
 }
 
-int putq(b)
-struct BOARD *b; {
-    struct BOARD *n,*oldn=NULL; 
+void putq(BOARD *b){
+    BOARD *n,*oldn=NULL; 
     for (n=q0; n!=NULL; n=n->next)
-	if (equal(b,n)) {free(b); return; }
+	if (equal(b,n)) {
+        free(b); 
+        return; 
+    }
     if (q2==NULL) {
-	f_value(b);
-	q2=b;
-	bornprint(b);
+        f_value(b);
+        q2=b;
+        bornprint(b);
     }
     else {
-	f_value(b);
-	for (n=q2; n->next!=NULL; n=n->next)
-	    if (equal(b,n)) {free(b); return; }
-	for (n=q2; n!=NULL; oldn=n, n=n->next)
-	    if (n->f > b->f) break;
-	b -> next = n;
-	if (oldn != NULL) oldn->next = b;
-	else q2 = b;
-	bornprint(b);
+	    f_value(b);
+	    for (n=q2; n->next!=NULL; n=n->next)
+	        if (equal(b,n)) {
+                free(b); 
+                return; 
+            }
+	    for (n=q2; n!=NULL; oldn=n, n=n->next){
+	        if (n->f > b->f) break;
+        }
+	    b -> next = n;
+	    if (oldn != NULL) oldn->next = b;
+	    else q2 = b;
+	    bornprint(b);
     }
 }
 
