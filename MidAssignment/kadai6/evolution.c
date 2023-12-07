@@ -3,9 +3,9 @@
 #include <string.h>
 #include <math.h>
 
-#define FIELD_SIZE 32
-#define NUM_FAMILY 100
-#define NUM_GENERATION 20000
+#define FIELD_SIZE 40
+#define NUM_INDIVIDUAL 200
+#define NUM_GENERATION 10000
 #define NUM_POINTS 23
 
 typedef struct Point{
@@ -14,34 +14,34 @@ typedef struct Point{
     double score;
 } Point;
 
-typedef struct Family{
+typedef struct Group{
     double sum_score;
     Point points[NUM_POINTS];
-} Family;
+} Group;
 
 int mask[FIELD_SIZE][FIELD_SIZE];
 
-Family* init(){
-    Family *family = (Family*)malloc(sizeof(Family) * NUM_FAMILY);
-    for(int i = 0; i < NUM_FAMILY; i++){
+Group* init(){
+    Group *group = (Group*)malloc(sizeof(Group) * NUM_INDIVIDUAL);
+    for(int i = 0; i < NUM_INDIVIDUAL; i++){
         for (int j = 0; j < NUM_POINTS; j++){
-            family[i].points[j].x = rand() % FIELD_SIZE;
-            family[i].points[j].y = rand() % FIELD_SIZE;
-            family[i].points[j].score = 0;
+            group[i].points[j].x = rand() % FIELD_SIZE;
+            group[i].points[j].y = rand() % FIELD_SIZE;
+            group[i].points[j].score = 0;
         }   
-        family[i].sum_score = 0;
+        group[i].sum_score = 0;
     }
-    return family;
-    free(family);
+    return group;
+    free(group);
 }
 
 double calc_potential_energy(Point point1, Point point2){
     return 1 / (pow(pow((point1.x - point2.x), 2) + pow((point1.y - point2.y), 2), 0.5)+ 0.001);
 }
 
-int cmp_Asc_Score(const void *family1, const void *family2){
-    if (((Family *)family1)->sum_score > ((Family *)family2)->sum_score) return 1;
-    else if (((Family *)family1)->sum_score < ((Family*)family2)->sum_score) return -1;
+int cmp_Asc_Score(const void *group1, const void *group2){
+    if (((Group *)group1)->sum_score > ((Group *)group2)->sum_score) return 1;
+    else if (((Group *)group1)->sum_score < ((Group *)group2)->sum_score) return -1;
     else return 0;
 }
 
@@ -51,14 +51,14 @@ int cmp_Asc_Score_for_point(const void *point1, const void *point2){
     else return 0;
 }
 
-void printboard(Family family, int gen){
+void printboard(Group group, int gen){
     for (int j = 0; j < FIELD_SIZE; j++){
         for (int k = 0; k < FIELD_SIZE; k++){
             mask[j][k] = 0;
         }
     }
     for (int j = 0; j < NUM_POINTS; j++){
-        mask[family.points[j].y][family.points[j].x] = 1;
+        mask[group.points[j].y][group.points[j].x] = 1;
     }
     printf("generation: %d\n", gen);
     for (int j = 0; j < FIELD_SIZE + 2; j++){
@@ -78,81 +78,77 @@ void printboard(Family family, int gen){
 
 int main(){
     //構造体の定義
-    Family *family = (Family*)malloc(sizeof(Family) * NUM_FAMILY);
-    Family *nextfamily = (Family*)malloc(sizeof(Family) * NUM_FAMILY);
+    Group *group = (Group*)malloc(sizeof(Group) * NUM_INDIVIDUAL);
+    Group *nextgroup = (Group*)malloc(sizeof(Group) * NUM_INDIVIDUAL);
     
     //構造体の初期化
-    family = init();
-    nextfamily = init();
+    group = init();
+    nextgroup = init();
 
     //変数の定義
     double score, ran_value;
 
     //世代数だけ進化計算を行う
     for (int i = 0; i < NUM_GENERATION; i++){
-        for (int j = 0; j < NUM_FAMILY; j++){
+        for (int j = 0; j < NUM_INDIVIDUAL; j++){
             for (int k = 0; k < NUM_POINTS - 1; k++){
                 for (int l = k + 1; l < NUM_POINTS; l++){
-                    score = calc_potential_energy(family[j].points[k], family[j].points[l]);
-                    family[j].points[k].score += score;
-                    family[j].points[l].score += score;
-                    family[j].sum_score += score; 
+                    score = calc_potential_energy(group[j].points[k], group[j].points[l]);
+                    group[j].points[k].score += score;
+                    group[j].points[l].score += score;
+                    group[j].sum_score += score; 
                 }
                 
             }
         }
         //家族のスコアの昇順にソート
-        qsort(family, NUM_FAMILY, sizeof(Family), cmp_Asc_Score);
-        
-        for (int j = 0; j < NUM_FAMILY; j++){
-            qsort(&family[j].points, NUM_POINTS, sizeof(Point), cmp_Asc_Score_for_point);
+        qsort(group, NUM_INDIVIDUAL, sizeof(Group), cmp_Asc_Score);
+
+        //printf("generation: %d\n", i);
+        //for (int j = 0; j < NUM_INDIVIDUAL; j++) printf("%f\n", group[j].sum_score);
+        if (i % 100 == 0) printboard(group[0], i); 
+
+        for (int j = 0; j < NUM_INDIVIDUAL; j++){
+            qsort(&group[j].points, NUM_POINTS, sizeof(Point), cmp_Asc_Score_for_point);
         }
 
-        if (i % 100 == 0) printboard(family[0], i);
-        
+    
         //次の世代への引き継ぎ
-        for (int j = 0; j < NUM_FAMILY / 5; j++){
-            memcpy(&nextfamily[j], &family[j], sizeof(Family));
-            nextfamily[j].sum_score = 0;
+        for (int j = 0; j < NUM_INDIVIDUAL / 5; j++){
+            memcpy(&nextgroup[j], &group[j], sizeof(Group));
+            nextgroup[j].sum_score = 0;
+            for (int k = 0; k < NUM_POINTS; k++) nextgroup[j].points[k].score = 0;
         }
 
-        for (int j = NUM_FAMILY / 5 ; j < NUM_FAMILY; j++){
-            int f1 = rand() % (NUM_FAMILY / 3);
-            int f2 = (f1 + 37) % (NUM_FAMILY / 3);
-            int ko, ko2;
+        for (int j = NUM_INDIVIDUAL / 5 ; j < NUM_INDIVIDUAL; j++){
+            int father = rand() % (NUM_INDIVIDUAL / 5);
+            int mother = rand() % (NUM_INDIVIDUAL / 5);
             for(int k = 0; k < NUM_POINTS; k++){
+                int a = rand() % NUM_POINTS;
                 if (k < (int)(NUM_POINTS * 0.4)){
-                    int a = rand() % NUM_POINTS;
-                    nextfamily[j].points[k].x = family[f1].points[k].x;
-                    nextfamily[j].points[k].y = family[f1].points[k].y;
-                    ko = k;
+                    nextgroup[j].points[k].x = group[father].points[k].x;
+                    nextgroup[j].points[k].y = group[father].points[k].y;
                 }
                 else if (k < (int)(NUM_POINTS * 0.8)){
-                    int a = rand() % NUM_POINTS;
-                    nextfamily[j].points[k].x = family[f2].points[k - ko - 1].x;
-                    nextfamily[j].points[k].y = family[f2].points[k - ko - 1].y;
-                    ko2 = k;
+                    nextgroup[j].points[k].x = group[mother].points[k].x;
+                    nextgroup[j].points[k].y = group[mother].points[k].y;
                 }
                 else {
-                    ran_value = (double)rand() / RAND_MAX;
-                    if (ran_value > 0.8){
-                        nextfamily[j].points[k].x = rand() % FIELD_SIZE;
-                        nextfamily[j].points[k].y = rand() % FIELD_SIZE;
-                    } else {
-                        int a = rand() % NUM_POINTS;
-                        nextfamily[j].points[k].x = ((family[f1].points[k - ko2 - 1].x + family[f2].points[k - ko2 - 1].x) / 2) ;
-                        nextfamily[j].points[k].y = ((family[f1].points[k - ko2 - 1].y + family[f2].points[k - ko2 - 1].y) / 2) ;
-                    }
+                    nextgroup[j].points[k].x = rand() % FIELD_SIZE;
+                    nextgroup[j].points[k].y = rand() % FIELD_SIZE;
                 }
             }
-            nextfamily[j].sum_score = 0;
+
+            for (int k = 0; k < NUM_POINTS; k++) nextgroup[j].points[k].score = 0;
+            nextgroup[j].sum_score = 0;
         }
 
-        memcpy(family, nextfamily, sizeof(Family) * NUM_FAMILY);
+        //構造体を次の世代にコピー
+        memcpy(group, nextgroup, sizeof(Group) * NUM_INDIVIDUAL);
         
     }
-    free(family);
-    free(nextfamily);
+    free(group);
+    free(nextgroup);
     return 0;
 }
 
