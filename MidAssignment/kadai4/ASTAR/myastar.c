@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_COUPLES 4
+#define NUM_COUPLES 3
 #define NUM_PEOPLE (2 * NUM_COUPLES)
 #define NUM_TRANSITION (NUM_PEOPLE * (NUM_PEOPLE - 1) / 2 + NUM_PEOPLE)
 

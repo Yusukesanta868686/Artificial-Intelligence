@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_COUPLES 4
+#define NUM_COUPLES 7
 #define NUM_PEOPLE (2 * NUM_COUPLES)
 
 typedef struct BOARD {

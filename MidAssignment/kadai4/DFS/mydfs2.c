@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_COUPLES 7
+#define NUM_COUPLES 6
 #define NUM_PEOPLE (2 * NUM_COUPLES)
 #define NUM_TRANSITION (NUM_PEOPLE * (NUM_PEOPLE - 1) / 2 + NUM_PEOPLE)
 
@@ -22,8 +22,8 @@ BOARD *q2 = &B0;
 int nc = 0;
 int ns = 0;
 
-int depth_limit = 4;
-int depth_increase = 6;
+int depth_limit = 2;
+int depth_increase = 4;
 
 struct BOARD *getq() {
     struct BOARD *q,*oldn,*n; 
