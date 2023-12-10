@@ -7,10 +7,11 @@
 #define NUM_INDIVIDUAL 200
 #define NUM_GENERATION 10000
 #define NUM_POINTS 23
-
+#define MASK_SIZE (int)((1 + (double)1 / pow(2, 0.5)) * FIELD_SIZE)
 typedef struct Point{
     int x;
     int y;
+    int z;
 } Point;
 
 typedef struct Individual{
@@ -18,7 +19,7 @@ typedef struct Individual{
     Point points[NUM_POINTS];
 } Individual;
 
-int mask[FIELD_SIZE][FIELD_SIZE];
+
 
 Individual* init(){
     Individual *group = (Individual*)malloc(sizeof(Individual) * NUM_INDIVIDUAL);
@@ -26,6 +27,7 @@ Individual* init(){
         for (int j = 0; j < NUM_POINTS; j++){
             group[i].points[j].x = rand() % FIELD_SIZE;
             group[i].points[j].y = rand() % FIELD_SIZE;
+            group[i].points[j].z = rand() % FIELD_SIZE;
         }   
         group[i].sum_score = 0;
     }
@@ -34,7 +36,7 @@ Individual* init(){
 }
 
 double calc_potential_energy(Point point1, Point point2){
-    return 1 / (pow(pow((point1.x - point2.x), 2) + pow((point1.y - point2.y), 2), 0.5)+ 0.001);
+    return 1 / (pow(pow(point1.x - point2.x, 2) + pow(point1.y - point2.y, 2) + pow(point1.z - point2.z, 2), 0.5)+ 0.001);
 }
 
 int cmp_Asc_Score(const void *group1, const void *group2){
@@ -45,22 +47,27 @@ int cmp_Asc_Score(const void *group1, const void *group2){
 
 
 void printboard(Individual group, int gen){
-    for (int j = 0; j < FIELD_SIZE; j++){
-        for (int k = 0; k < FIELD_SIZE; k++){
+    int mask[MASK_SIZE][MASK_SIZE];
+    int z, x;
+    for (int j = 0; j < MASK_SIZE; j++){
+        for (int k = 0; k < MASK_SIZE; k++){
             mask[j][k] = 0;
         }
     }
     for (int j = 0; j < NUM_POINTS; j++){
-        mask[group.points[j].y][group.points[j].x] = 1;
+        z = (int)(group.points[j].z + (double)group.points[j].y / pow(2, 0.5));
+        x = (int)(group.points[j].x + (double)group.points[j].y / pow(2, 0.5));
+        printf("%d, %d\n", z, x);
+        mask[z][x] = 1;
     }
     printf("generation: %d\n", gen);
-    for (int j = 0; j < FIELD_SIZE + 2; j++){
-        for (int k = 0; k < FIELD_SIZE + 2; k++){
-            if (j == 0 || j == FIELD_SIZE + 1){
-                if (k == 0 || k == FIELD_SIZE + 1) printf("+");
+    for (int j = 0; j < MASK_SIZE + 2; j++){
+        for (int k = 0; k < MASK_SIZE + 2; k++){
+            if (j == 0 || j == MASK_SIZE + 1){
+                if (k == 0 || k == MASK_SIZE + 1) printf("+");
                 else printf("--");
             } else{
-                if (k == 0 || k == FIELD_SIZE + 1) printf("|");
+                if (k == 0 || k == MASK_SIZE + 1) printf("|");
                 else if (mask[j - 1][k - 1] == 1) printf("o ");
                 else printf("  ");
             }
@@ -99,7 +106,7 @@ int main(){
         //printf("generation: %d\n", i);
         //for (int j = 0; j < NUM_INDIVIDUAL; j++) printf("%f\n", group[j].sum_score);
         if (i % 100 == 0) printboard(group[0], i); 
-    
+        
         //次の世代への引き継ぎ
         for (int j = 0; j < NUM_INDIVIDUAL / 5; j++){
             memcpy(&nextgroup[j], &group[j], sizeof(Individual));
@@ -115,25 +122,20 @@ int main(){
                 if (a < 0.4){
                     nextgroup[j].points[k].x = group[father].points[k].x;
                     nextgroup[j].points[k].y = group[father].points[k].y;
+                    nextgroup[j].points[k].z = group[father].points[k].z;
                 }
                 else if (a < 0.8){
                     nextgroup[j].points[k].x = group[mother].points[k].x;
                     nextgroup[j].points[k].y = group[mother].points[k].y;
+                    nextgroup[j].points[k].z = group[mother].points[k].z;
                 }
                 else {
                     nextgroup[j].points[k].x = rand() % FIELD_SIZE;
                     nextgroup[j].points[k].y = rand() % FIELD_SIZE;
+                    nextgroup[j].points[k].z = rand() % FIELD_SIZE;
                 }
             }
             nextgroup[j].sum_score = 0;
         }
 
-        //構造体を次の世代にコピー
-        memcpy(group, nextgroup, sizeof(Individual) * NUM_INDIVIDUAL);
-        
-    }
-    free(group);
-    free(nextgroup);
-    return 0;
-}
-
+       
