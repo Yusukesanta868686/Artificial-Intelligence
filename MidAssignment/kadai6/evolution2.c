@@ -68,7 +68,10 @@ void printboard(Individual group, int gen){
                 else printf("--");
             } else{
                 if (k == 0 || k == MASK_SIZE + 1) printf("|");
-                else if (mask[j - 1][k - 1] == 1) printf("o ");
+                else if (mask[MASK_SIZE - j][k - 1] == 1) {
+                    printf("o ");
+                    //printf("%d, %d\n", MASK_SIZE - j - 2, k - 1);
+                }
                 else printf("  ");
             }
         }
@@ -138,4 +141,11 @@ int main(){
             nextgroup[j].sum_score = 0;
         }
 
-       
+        //構造体を次の世代にコピー
+        memcpy(group, nextgroup, sizeof(Individual) * NUM_INDIVIDUAL);
+        
+    }
+    free(group);
+    free(nextgroup);
+    return 0;
+}
