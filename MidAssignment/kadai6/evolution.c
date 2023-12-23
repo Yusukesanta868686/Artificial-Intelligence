@@ -96,8 +96,6 @@ int main(){
         //家族のスコアの昇順にソート
         qsort(group, NUM_INDIVIDUAL, sizeof(Individual), cmp_Asc_Score);
 
-        //printf("generation: %d\n", i);
-        //for (int j = 0; j < NUM_INDIVIDUAL; j++) printf("%f\n", group[j].sum_score);
         if (i % 100 == 0) printboard(group[0], i); 
     
         //次の世代への引き継ぎ

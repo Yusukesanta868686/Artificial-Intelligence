@@ -85,7 +85,7 @@ int diff(BOARD* b1,BOARD* b2){
 
 
 void f_value(BOARD *b){
-    b->f = b->depth + diff(b,&BG);
+    b->f = b->depth + 10 * diff(b,&BG);
 }
 
 

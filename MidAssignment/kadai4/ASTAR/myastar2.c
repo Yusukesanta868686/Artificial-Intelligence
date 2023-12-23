@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_COUPLES 6
+#define NUM_COUPLES 4
 #define NUM_PEOPLE (2 * NUM_COUPLES)
 #define NUM_TRANSITION (NUM_PEOPLE * (NUM_PEOPLE - 1) / 2 + NUM_PEOPLE)
 
@@ -74,12 +74,26 @@ void init(){
     B0.now = 0;
     BG.now = 0;
 }
-
+/*
 int diff(BOARD* b1,BOARD* b2){
     int ans=0,k;
     for (k = 0; k < NUM_PEOPLE; k++) if(b1->cell[k] != b2->cell[k]) ans++;
     return(ans);
+}*/
+
+int diff(BOARD* b1,BOARD* b2){
+    int ans=0,k;
+    for (k = 0; k < NUM_PEOPLE; k++) if(b1->cell[k] == 0) ans++;
+    return(ans);
 }
+
+/*
+int diff(BOARD* b1,BOARD* b2){
+    int ans=0,k;
+    for (k = 0; k < NUM_PEOPLE; k++) if(b1->cell[k] == 1) ans++;
+    return(ans);
+}
+*/
 
 
 void f_value(BOARD *b){
