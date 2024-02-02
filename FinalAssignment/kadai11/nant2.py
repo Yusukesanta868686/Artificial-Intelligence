@@ -3,6 +3,7 @@ from math import pi, sin, cos, atan2, radians, degrees
 from random import randint
 import pygame as pg
 import numpy as np
+import random
 '''
 NAnts - Ant pheromone trail simulation. Surfarray version. WIP
 Copyright (c) 2021  Nikolaus Stromberg  nikorasu85@gmail.com
@@ -17,8 +18,11 @@ PRATIO = 5              # Pixel Size for Pheromone grid, 5 is best
 SHOWFPS = True          # show framerate debug
 
 class Ant(pg.sprite.Sprite):
-    def __init__(self, drawSurf, nest, pheroLayer, foodList):
+    def __init__(self, drawSurf, nest, pheroLayer, foodList, energy, efficiency_threshold):
         super().__init__()
+        self.energy = energy
+        self.energy_use = energy
+        self.efficiency_threshold = efficiency_threshold
         self.drawSurf = drawSurf
         self.curW, self.curH = self.drawSurf.get_size()
         self.pgSize = (int(self.curW/PRATIO), int(self.curH/PRATIO))
@@ -82,7 +86,7 @@ class Ant(pg.sprite.Sprite):
         if self.mode == 0 and self.pos.distance_to(self.nest) > 21:
             self.mode = 1
 
-        elif self.mode == 1:  # Look for food, or trail to food.
+        elif self.mode == 1 and self.energy_use >= 0.5:  # Look for food, or trail to food.
             setAcolor = (0,0,100)
             if scaledown_pos != self.last_sdp and scaledown_pos[0] in range(0,self.pgSize[0]) and scaledown_pos[1] in range(0,self.pgSize[1]):
                 self.phero.img_array[scaledown_pos] += setAcolor
@@ -120,9 +124,18 @@ class Ant(pg.sprite.Sprite):
                 wandrStr = .01
                 steerStr = 5
                 self.mode = 2
+            if food_count[0] / (dt / 1000.0) < self.efficiency_threshold:
+                self.energy_use = 1  # Change mode to 1 to initiate search for efficient foragers
+            else:
+                self.energy_use = self.energy
 
-        elif self.mode == 2:  # Once found food, either follow own trail back to nest, or head in nest's general direction.
+        elif self.mode == 2 and self.energy >= 0.5:  # Once found food, either follow own trail back to nest, or head in nest's general direction.
             setAcolor = (0,80,0)
+            if food_count[0] / (dt / 1000.0) < self.efficiency_threshold:
+                self.energy_use = 1  # Change mode to 1 to initiate search for efficient foragers
+            else:
+                self.energy_use = self.energy
+
             if scaledown_pos != self.last_sdp and scaledown_pos[0] in range(0,self.pgSize[0]) and scaledown_pos[1] in range(0,self.pgSize[1]):
                 self.phero.img_array[scaledown_pos] += setAcolor
                 self.last_sdp = scaledown_pos
@@ -259,7 +272,7 @@ def main():
     clock = pg.time.Clock()
     fpsChecker = 0
     for n in range(ANTS):
-        workers.add(Ant(screen, nest, pheroLayer, foodList))
+        workers.add(Ant(screen, nest, pheroLayer, foodList, random.random(), 10))
     food_count = [0]
     # main loop
     while True:
