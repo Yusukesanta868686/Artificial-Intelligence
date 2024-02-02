@@ -48,7 +48,7 @@ class Ant(pg.sprite.Sprite):
         self.last_sdp = (nest[0]/10/2,nest[1]/10/2)
         self.mode = 0
 
-    def update(self, dt):  # behavior
+    def update(self, dt, food_count):  # behavior
         mid_result = left_result = right_result = [0,0,0]
         mid_GA_result = left_GA_result = right_GA_result = [0,0,0]
         randAng = randint(0,360)
@@ -108,6 +108,7 @@ class Ant(pg.sprite.Sprite):
                     for fbit in self.foodList:
                         if pg.Vector2(mid_sens).distance_to(fbit.rect.center) < 4:  # Collision detection
                             fbit.pickup()
+                            
                             # Optionally reduce ant's size here
                             # self.image = pg.transform.scale(self.orig_img, (int(self.image.get_width() * 0.9), int(self.image.get_height() * 0.9)))
                             # self.rect = self.image.get_rect(center=self.rect.center)
@@ -125,6 +126,7 @@ class Ant(pg.sprite.Sprite):
             if scaledown_pos != self.last_sdp and scaledown_pos[0] in range(0,self.pgSize[0]) and scaledown_pos[1] in range(0,self.pgSize[1]):
                 self.phero.img_array[scaledown_pos] += setAcolor
                 self.last_sdp = scaledown_pos
+                
             if self.pos.distance_to(self.nest) < 24:
                 #self.desireDir = pg.Vector2(self.lastFood - self.pos).normalize()
                 self.desireDir = pg.Vector2(-1,0).rotate(self.ang).normalize()
@@ -133,6 +135,7 @@ class Ant(pg.sprite.Sprite):
                 wandrStr = .01
                 steerStr = 5
                 self.mode = 1
+                food_count[0] += 1
             elif mid_result[2] > max(left_result[2], right_result[2]) and mid_isID: #and mid_result[:2] == (0,0):
                 self.desireDir += pg.Vector2(1,0).rotate(self.ang).normalize()
                 wandrStr = .1
@@ -257,6 +260,7 @@ def main():
     fpsChecker = 0
     for n in range(ANTS):
         workers.add(Ant(screen, nest, pheroLayer, foodList))
+    food_count = [0]
     # main loop
     while True:
         for e in pg.event.get():
@@ -291,14 +295,14 @@ def main():
             food.image.set_colorkey(0)
             pg.draw.circle(food.image, [20, 150, 2], [food.size // 2, food.size // 2], food.size // 4)
 
-        workers.update(dt)
+        workers.update(dt, food_count)
 
         screen.fill(0) # fill MUST be after sensors update, so previous draw is visible to them
 
         rescaled_img = pg.transform.scale(pheroImg, (cur_w, cur_h))
         pg.Surface.blit(screen, rescaled_img, (0,0))
 
-        workers.update(dt)  # enable here to see debug dots
+        workers.update(dt, food_count)  # enable here to see debug dots
         foods.draw(screen)
 
         pg.draw.circle(screen, [40,10,10], (nest[0],nest[1]+6), 6, 3)
@@ -311,6 +315,10 @@ def main():
         workers.draw(screen)
 
         if SHOWFPS : screen.blit(font.render(str(int(clock.get_fps())), True, [0,200,0]), (8, 8))
+        if fpsChecker % 100 == 0:
+            print("Food count at nest:", food_count[0])
+
+        fpsChecker += 1
 
         pg.display.update()
 
