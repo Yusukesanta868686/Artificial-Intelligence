@@ -10,19 +10,22 @@ NAnts - Ant pheromone trail simulation. Surfarray version. WIP
 Copyright (c) 2021  Nikolaus Stromberg  nikorasu85@gmail.com
 '''
 FLLSCRN = False         # True for Fullscreen, or False for Window
-ANTS = 42               # Number of Ants to spawn
+ANTS = 25               # Number of Ants to spawn
 WIDTH = 1200            # default 1200
 HEIGHT = 800            # default 800
 FPS = 60                # 48-90
 VSYNC = True            # limit frame rate to refresh rate
 PRATIO = 5              # Pixel Size for Pheromone grid, 5 is best
 SHOWFPS = True          # show framerate debug
-THRESHOLD = 0.0
+THRESHOLD = 0.7
+#閾値に加え、疲れを導入したプログラム
 
-#まずは、閾値を設定するだけのプログラム
 class Ant(pg.sprite.Sprite):
     def __init__(self, drawSurf, nest, pheroLayer, foodList, energy, efficiency_threshold, thre_mode = "fixed"):
         super().__init__()
+        self.enable = 0
+        self.fatigue = 0
+        self.rest = 0
         self.energy = 1 if thre_mode == "fixed" else energy
         self.energy_use = self.energy
         self.efficiency_threshold = efficiency_threshold
@@ -55,7 +58,29 @@ class Ant(pg.sprite.Sprite):
         self.last_sdp = (nest[0]/10/2,nest[1]/10/2)
         self.mode = 0
 
-    def update(self, dt, food_count, food_coount_previous, fpschecker):  # behavior
+    def update(self, dt, food_count, food_coount_previous, fpschecker, efficiency):  # behavior
+        if self.fatigue >= 0.5:
+            self.fatigue  = 0
+            self.rest = 1000
+            return 
+        if self.rest > 0:
+            self.rest -= 1
+            return
+        
+        #効率が下がったら怠惰なアリも働かせる
+        
+        if fpschecker % 100 == 0:
+            if efficiency < self.efficiency_threshold:
+                self.energy_use = min(self.energy_use + 0.1, 1)  # Change mode to 1 to initiate search for efficient foragers
+            else:
+                self.energy_use = self.energy
+
+        if self.energy_use >= THRESHOLD:
+            self.enable = 1
+
+        if self.enable == 0:
+            return
+             
         mid_result = left_result = right_result = [0,0,0]
         mid_GA_result = left_GA_result = right_GA_result = [0,0,0]
         randAng = randint(0,360)
@@ -71,13 +96,6 @@ class Ant(pg.sprite.Sprite):
         mid_sens = Vec2.vint(self.pos + pg.Vector2(20, 0).rotate(self.ang))
         left_sens = Vec2.vint(self.pos + pg.Vector2(18, -8).rotate(self.ang)) # -9
         right_sens = Vec2.vint(self.pos + pg.Vector2(18, 8).rotate(self.ang)) # 9
-        
-        #効率が下がったら怠惰なアリも働かせる
-        if fpschecker % 100 == 0:
-            if food_count[0] - food_coount_previous < self.efficiency_threshold:
-                self.energy_use = min(self.energy_use + 0.1, 1)  # Change mode to 1 to initiate search for efficient foragers
-            else:
-                self.energy_use = self.energy
 
         if self.drawSurf.get_rect().collidepoint(mid_sens):
             mspos = (mid_sens[0]//PRATIO,mid_sens[1]//PRATIO)
@@ -96,7 +114,7 @@ class Ant(pg.sprite.Sprite):
         if self.mode == 0 and self.pos.distance_to(self.nest) > 21:
             self.mode = 1
 
-        elif self.mode == 1 and self.energy_use >= THRESHOLD:  # Look for food, or trail to food.
+        elif self.mode == 1:  # Look for food, or trail to food.
             setAcolor = (0,0,100)
             if scaledown_pos != self.last_sdp and scaledown_pos[0] in range(0,self.pgSize[0]) and scaledown_pos[1] in range(0,self.pgSize[1]):
                 self.phero.img_array[scaledown_pos] += setAcolor
@@ -135,7 +153,7 @@ class Ant(pg.sprite.Sprite):
                 steerStr = 5
                 self.mode = 2
 
-        elif self.mode == 2 and self.energy >= THRESHOLD:  # Once found food, either follow own trail back to nest, or head in nest's general direction.
+        elif self.mode == 2:  # Once found food, either follow own trail back to nest, or head in nest's general direction.
             setAcolor = (0,80,0)
 
             if scaledown_pos != self.last_sdp and scaledown_pos[0] in range(0,self.pgSize[0]) and scaledown_pos[1] in range(0,self.pgSize[1]):
@@ -151,6 +169,11 @@ class Ant(pg.sprite.Sprite):
                 steerStr = 5
                 self.mode = 1
                 food_count[0] += 1
+                self.fatigue += 0.1
+
+                if self.energy_use < THRESHOLD:
+                    self.enable = 0
+
             elif mid_result[2] > max(left_result[2], right_result[2]) and mid_isID: #and mid_result[:2] == (0,0):
                 self.desireDir += pg.Vector2(1,0).rotate(self.ang).normalize()
                 wandrStr = .1
@@ -278,9 +301,10 @@ def main():
     clock = pg.time.Clock()
     fpsChecker = 0
     for n in range(ANTS):
-        workers.add(Ant(screen, nest, pheroLayer, foodList, random.random(), 5, args.threshold_mode))
+        workers.add(Ant(screen, nest, pheroLayer, foodList, random.random(), 3, args.threshold_mode))
     food_count = [0]
     food_count_previous = 0
+    efficiency = 10
     # main loop
     while True:
         for e in pg.event.get():
@@ -315,7 +339,8 @@ def main():
             food.image.set_colorkey(0)
             pg.draw.circle(food.image, [20, 150, 2], [food.size // 2, food.size // 2], food.size // 4)
 
-        workers.update(dt, food_count, food_count_previous, fpsChecker)
+        
+        workers.update(dt, food_count, food_count_previous, fpsChecker, efficiency)
 
         screen.fill(0) # fill MUST be after sensors update, so previous draw is visible to them
 
@@ -336,6 +361,7 @@ def main():
 
         if SHOWFPS : screen.blit(font.render(str(int(clock.get_fps())), True, [0,200,0]), (8, 8))
         if fpsChecker % 100 == 0:
+            efficiency = food_count[0] - food_count_previous
             food_count_previous = food_count[0]
             print("Food count at nest:", food_count[0])
             count = sum(1 for ant in workers if ant.energy_use >= THRESHOLD)
