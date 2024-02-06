@@ -19,12 +19,15 @@ PRATIO = 5              # Pixel Size for Pheromone grid, 5 is best
 SHOWFPS = True          # show framerate debug
 THRESHOLD = 0.0
 
-#まずは、閾値を設定するだけのプログラム
+######まずは、閾値を設定するだけのプログラム######
 class Ant(pg.sprite.Sprite):
     def __init__(self, drawSurf, nest, pheroLayer, foodList, energy, efficiency_threshold, thre_mode = "fixed"):
         super().__init__()
+        #各アリが持つエネルギー
         self.energy = 1 if thre_mode == "fixed" else energy
+        #各アリ働くかどうかを決める際に用いる値
         self.energy_use = self.energy
+        #収集効率の目安(これより低かったらより多くのアリに働かせる)
         self.efficiency_threshold = efficiency_threshold
         self.drawSurf = drawSurf
         self.curW, self.curH = self.drawSurf.get_size()
@@ -150,6 +153,7 @@ class Ant(pg.sprite.Sprite):
                 wandrStr = .01
                 steerStr = 5
                 self.mode = 1
+                #餌が巣に到着したらカウントを1増やす
                 food_count[0] += 1
             elif mid_result[2] > max(left_result[2], right_result[2]) and mid_isID: #and mid_result[:2] == (0,0):
                 self.desireDir += pg.Vector2(1,0).rotate(self.ang).normalize()
@@ -335,6 +339,8 @@ def main():
         workers.draw(screen)
 
         if SHOWFPS : screen.blit(font.render(str(int(clock.get_fps())), True, [0,200,0]), (8, 8))
+
+        #100フレームごとに巣に運ばれてきた餌の合計を出力
         if fpsChecker % 100 == 0:
             food_count_previous = food_count[0]
             print("Food count at nest:", food_count[0])

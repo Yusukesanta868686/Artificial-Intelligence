@@ -10,7 +10,7 @@ NAnts - Ant pheromone trail simulation. Surfarray version. WIP
 Copyright (c) 2021  Nikolaus Stromberg  nikorasu85@gmail.com
 '''
 FLLSCRN = False         # True for Fullscreen, or False for Window
-ANTS = 25               # Number of Ants to spawn
+ANTS = 42               # Number of Ants to spawn
 WIDTH = 1200            # default 1200
 HEIGHT = 800            # default 800
 FPS = 60                # 48-90
@@ -18,7 +18,7 @@ VSYNC = True            # limit frame rate to refresh rate
 PRATIO = 5              # Pixel Size for Pheromone grid, 5 is best
 SHOWFPS = True          # show framerate debug
 THRESHOLD = 0.7
-#閾値に加え、疲れを導入したプログラム
+#######閾値に加え、疲れを導入したプログラム######
 
 class Ant(pg.sprite.Sprite):
     def __init__(self, drawSurf, nest, pheroLayer, foodList, energy, efficiency_threshold, thre_mode = "fixed"):
@@ -59,10 +59,12 @@ class Ant(pg.sprite.Sprite):
         self.mode = 0
 
     def update(self, dt, food_count, food_coount_previous, fpschecker, efficiency):  # behavior
+        #5回運んだら1000フレーム休む
         if self.fatigue >= 0.5:
             self.fatigue  = 0
             self.rest = 1000
             return 
+        #休憩中、1フレームごとにrest変数を減らしていく
         if self.rest > 0:
             self.rest -= 1
             return
@@ -301,7 +303,7 @@ def main():
     clock = pg.time.Clock()
     fpsChecker = 0
     for n in range(ANTS):
-        workers.add(Ant(screen, nest, pheroLayer, foodList, random.random(), 3, args.threshold_mode))
+        workers.add(Ant(screen, nest, pheroLayer, foodList, random.random(), 5, args.threshold_mode))
     food_count = [0]
     food_count_previous = 0
     efficiency = 10
